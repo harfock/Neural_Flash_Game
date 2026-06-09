@@ -1,0 +1,6 @@
+{
+  "name": "Snapshot Blitz High Contrast",
+  "description": "An accessible, high-contrast, memory-grid matching game optimized for elderly users and seniors, featuring persistent cloud-synced progress on Firebase, mistake protection, and click path history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

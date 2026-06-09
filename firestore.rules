@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(obj) {
+      return isSignedIn() && obj.ownerId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 2. Profiles Rules
+    match /profiles/{profileId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(profileId)
+                    && request.resource.data.keys().hasAll(['name', 'maxLvl', 'ownerId', 'createdAt', 'updatedAt'])
+                    && request.resource.data.keys().size() == 5
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.maxLvl is int
+                    && request.resource.data.maxLvl >= 1
+                    && request.resource.data.maxLvl <= 1000
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.updatedAt == request.time;
+
+      allow update: if isSignedIn() && isValidId(profileId)
+                    && isOwner(resource.data)
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.maxLvl is int
+                    && request.resource.data.maxLvl >= 1
+                    && request.resource.data.maxLvl <= 1000
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && request.resource.data.updatedAt == request.time
+                    && request.resource.data.diff(resource.data).affectedKeys().hasAny(['maxLvl', 'name', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isOwner(resource.data);
+    }
+
+    // 3. Game History Rules
+    match /game_history/{historyId} {
+      allow get: if isSignedIn() && isOwner(resource.data);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(historyId)
+                    && request.resource.data.keys().hasAll(['profileId', 'level', 'score', 'livesRemaining', 'clicks', 'timestamp', 'ownerId'])
+                    && request.resource.data.keys().size() == 7
+                    && request.resource.data.profileId is string
+                    && request.resource.data.profileId.size() <= 128
+                    && request.resource.data.level is int
+                    && request.resource.data.level >= 1
+                    && request.resource.data.score is int
+                    && request.resource.data.score >= 0
+                    && request.resource.data.livesRemaining is int
+                    && request.resource.data.livesRemaining >= 0
+                    && request.resource.data.livesRemaining <= 3
+                    && request.resource.data.clicks is list
+                    && request.resource.data.clicks.size() <= 200
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.timestamp == request.time;
+    }
+  }
+}

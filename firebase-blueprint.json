@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile with level progress",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The custom name of the profile"
+        },
+        "maxLvl": {
+          "type": "integer",
+          "description": "The maximum level achieved"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this profile"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "maxLvl", "ownerId", "createdAt", "updatedAt"]
+    },
+    "GameHistory": {
+      "title": "GameHistory",
+      "description": "Historic round execution reports",
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "description": "Reference to the profile ID"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "score": {
+          "type": "integer"
+        },
+        "livesRemaining": {
+          "type": "integer"
+        },
+        "clicks": {
+          "type": "array",
+          "description": "List of string click statements"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ownerId": {
+          "type": "string"
+        }
+      },
+      "required": ["profileId", "level", "score", "livesRemaining", "clicks", "timestamp", "ownerId"]
+    }
+  },
+  "firestore": {
+    "profiles/{profileId}": {
+      "schema": "Profile",
+      "description": "Collection of user profiles"
+    },
+    "game_history/{historyId}": {
+      "schema": "GameHistory",
+      "description": "Round game histories"
+    }
+  }
+}
