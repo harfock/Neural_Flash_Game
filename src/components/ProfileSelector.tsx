@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
-  onAuthStateChanged, 
-  User 
-} from 'firebase/auth';
-import { auth } from '../firebase';
-import { fetchUserProfiles, createProfile } from '../firebaseUtils';
 import { Profile } from '../types';
-import { LogIn, LogOut, Plus, User as UserIcon, Award, UserCheck, Flame, Loader2 } from 'lucide-react';
+import { Plus, User as UserIcon, Flame, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ProfileSelectorProps {
@@ -24,76 +15,33 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   onProfileSelect, 
   activeProfile 
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Track auth state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Load profiles when user changes
+  // Load profiles from localStorage
   useEffect(() => {
     loadProfileList();
-  }, [user]);
+  }, []);
 
   const loadProfileList = async () => {
     setProfilesLoading(true);
     setErrorMessage('');
     try {
-      if (user) {
-        // Authenticated users get Firestore profiles
-        const list = await fetchUserProfiles(user.uid);
-        setProfiles(list);
+      // Guest users get localStorage lists
+      const guests = localStorage.getItem(GUEST_KEY);
+      if (guests) {
+        setProfiles(JSON.parse(guests));
       } else {
-        // Guest users get localStorage lists
-        const guests = localStorage.getItem(GUEST_KEY);
-        if (guests) {
-          setProfiles(JSON.parse(guests));
-        } else {
-          setProfiles([]);
-        }
+        setProfiles([]);
       }
     } catch (err: any) {
       console.error(err);
-      setErrorMessage("無法讀取存檔 / Failed to list profiles. Using temporary guest records.");
-      // Fallback
-      const guests = localStorage.getItem(GUEST_KEY);
-      if (guests) setProfiles(JSON.parse(guests));
+      setErrorMessage("無法讀取存檔 / Failed to list profiles.");
     } finally {
       setProfilesLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-    setAuthLoading(true);
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMessage("登入失敗 / Google Login failed. Please try again.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleGoogleSignOut = async () => {
-    try {
-      // Clear current selection
-      onProfileSelect(null, false);
-      await signOut(auth);
-    } catch (err: any) {
-      console.error(err);
     }
   };
 
@@ -105,25 +53,19 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
     setProfilesLoading(true);
     setErrorMessage('');
     try {
-      if (user) {
-        const p = await createProfile(name, user.uid);
-        setProfiles(prev => [p, ...prev]);
-        onProfileSelect(p, true);
-      } else {
-        // Save locally for Guest
-        const p: Profile = {
-          id: 'guest_' + Date.now(),
-          name,
-          maxLvl: 1,
-          ownerId: 'guest',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        const updated = [p, ...profiles];
-        localStorage.setItem(GUEST_KEY, JSON.stringify(updated));
-        setProfiles(updated);
-        onProfileSelect(p, false);
-      }
+      // Save locally for Guest
+      const p: Profile = {
+        id: 'guest_' + Date.now(),
+        name,
+        maxLvl: 1,
+        ownerId: 'guest',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const updated = [p, ...profiles];
+      localStorage.setItem(GUEST_KEY, JSON.stringify(updated));
+      setProfiles(updated);
+      onProfileSelect(p, false);
       setNewProfileName('');
       setShowCreate(false);
     } catch (err: any) {
@@ -135,7 +77,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   };
 
   const handleSelect = (p: Profile) => {
-    onProfileSelect(p, !!user);
+    onProfileSelect(p, false);
   };
 
   const handleGuestDelete = (e: React.MouseEvent, id: string) => {
@@ -151,41 +93,6 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto p-4 flex flex-col gap-6" id="profile-container">
-      {/* Auth Banner & Information with Extremely High Contrast (Geometric Balance) */}
-      <div className="bg-zinc-900 border-l-8 border-yellow-400 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white rounded-none">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-white text-black border-4 border-black rounded-none text-xl font-bold">
-            {user ? <UserCheck size={28} strokeWidth={3} /> : <UserIcon size={28} strokeWidth={3} />}
-          </div>
-          <div>
-            <h3 className="text-xl font-black tracking-tight text-yellow-400 uppercase">
-              {user ? "雲端儲存已就緒" : "未登入訪客模式"}
-            </h3>
-            <p className="text-sm font-bold text-zinc-300 lowercase antialiased">
-              {user ? `${user.displayName || user.email}` : "SAVED LOCALLY IN BROWSER"}
-            </p>
-          </div>
-        </div>
-
-        {user ? (
-          <button 
-            onClick={handleGoogleSignOut}
-            className="w-full sm:w-auto px-5 py-3 bg-red-600 hover:bg-red-750 text-white font-black text-lg border-4 border-white rounded-none active:scale-95 transition-all flex items-center justify-center gap-2 uppercase shadow-[4px_4px_0_#000]"
-          >
-            <LogOut size={22} strokeWidth={3} />
-            <span>登出 / LOGOUT</span>
-          </button>
-        ) : (
-          <button 
-            onClick={handleGoogleSignIn}
-            className="w-full sm:w-auto px-5 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-lg border-4 border-black rounded-none active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[4px_4px_0_#FFF] uppercase"
-          >
-            {authLoading ? <Loader2 className="animate-spin" size={22} strokeWidth={3} /> : <LogIn size={22} strokeWidth={3} />}
-            <span>GOOGLE SIGNIN</span>
-          </button>
-        )}
-      </div>
-
       {errorMessage && (
         <div className="p-4 bg-red-900 border-4 border-red-500 text-white font-extrabold text-lg text-center rounded-none shadow-[4px_4px_0_#000]">
           {errorMessage}
@@ -286,15 +193,13 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
                           <span>LVL {p.maxLvl}</span>
                         </div>
 
-                        {!user && (
-                          <button 
-                            onClick={(e) => handleGuestDelete(e, p.id)}
-                            className="p-1 px-2.5 bg-red-600 hover:bg-red-700 text-white rounded-none font-black text-sm border-2 border-white"
-                            title="Delete Guest Profile"
-                          >
-                            ✕
-                          </button>
-                        )}
+                        <button 
+                          onClick={(e) => handleGuestDelete(e, p.id)}
+                          className="p-1 px-2.5 bg-red-600 hover:bg-red-700 text-white rounded-none font-black text-sm border-2 border-white"
+                          title="Delete Profile"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </motion.div>
                   );
