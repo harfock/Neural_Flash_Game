@@ -621,13 +621,13 @@ export default function App() {
 
             {/* Round Active Display */}
             {(gameStatus === 'mem' || gameStatus === 'play') && (
-              <div className="w-full max-w-5xl mx-auto p-4 flex flex-col gap-6 items-center">
+              <div className="w-full max-w-5xl mx-auto px-4 py-2 flex flex-col gap-3 sm:gap-4 items-center">
                 
                 {/* Live Status Board with extremely high-contrast yellow outline (Geometric Balance) */}
-                <div className="w-full bg-zinc-900 border-l-8 border-yellow-400 p-6 rounded-none text-center flex flex-col justify-center items-center select-none shadow-[4px_4px_0_#FFF]">
+                <div className="w-full bg-zinc-900 border-l-8 border-yellow-400 py-2.5 px-4 rounded-none text-center flex flex-col justify-center items-center select-none shadow-[3px_3px_0_#FFF]">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-red-600 border-2 border-white animate-pulse" />
-                    <span className="text-2xl font-black text-white uppercase tracking-tight">
+                    <div className="w-3.5 h-3.5 rounded-full bg-red-600 border-2 border-white animate-pulse" />
+                    <span className="text-base sm:text-lg md:text-xl font-black text-white uppercase tracking-tight">
                       {gameStatus === 'mem' 
                         ? (isChinese ? `第一階段：請記住亮黃色目標位置 [還剩: ${memRemaining}秒]` : `MEMORIZE PROTOCOL... [REMAINING: ${memRemaining}S]`)
                         : (isChinese ? `第二階段：選出剛才亮起的氣泡，還有 [ ${targetCount - foundCount} ] 個！` : `FIND TARGETS: [${targetCount - foundCount} LEFT]`)
@@ -637,7 +637,7 @@ export default function App() {
 
                   {/* Multi-life status help */}
                   {gameStatus === 'play' && (
-                    <p className="text-lg font-black text-yellow-400 mt-2 uppercase tracking-wide">
+                    <p className="text-xs sm:text-sm font-black text-yellow-400 mt-1 uppercase tracking-wide">
                       {isChinese 
                         ? `生命提示：您可以再點錯 ${lives - 1} 次！` 
                         : `LIFE PROTECTION: ${lives} OF ${maxLives} ATTEMPTS REMAINING`
@@ -648,7 +648,7 @@ export default function App() {
 
                 {/* Elderly Helper hint floating box */}
                 {isElderly && gameStatus === 'play' && (
-                  <div className="w-full max-w-xl bg-yellow-400 border-4 border-black p-4 rounded-none text-black font-black text-2xl text-center shadow-[4px_4px_0_#FFF] uppercase tracking-wide">
+                  <div className="w-full max-w-md bg-yellow-400 border-2 sm:border-4 border-black py-1.5 px-3 rounded-none text-black font-black text-sm sm:text-lg text-center shadow-[3px_3px_0_#FFF] uppercase tracking-wide">
                     <span>💡 【長者提示】已找到 </span>
                     <span className="underline decoration-wavy font-black">{foundCount}</span>
                     <span> 個 / 剩餘：</span>
@@ -658,9 +658,9 @@ export default function App() {
                 )}
 
                 {/* THE MEMORY GRID (Highly accessible Geometric Balance: rounded-2xl, border-8!) */}
-                <div className="w-full flex justify-center items-center py-2">
+                <div className="w-full flex justify-center items-center py-1">
                   <div 
-                    className="grid gap-6 w-full max-w-md aspect-square bg-zinc-950 border-8 border-white p-6 rounded-none justify-center items-stretch justify-items-stretch shadow-[6px_6px_0_#000]"
+                    className="grid gap-2 sm:gap-4 w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] aspect-square bg-zinc-950 border-4 sm:border-8 border-white p-3 sm:p-5 rounded-none justify-center items-stretch justify-items-stretch shadow-[4px_4px_0_#000]"
                     style={{
                       gridTemplateColumns: `repeat(${level <= 4 ? 3 : level <= 8 ? 4 : level <= 12 ? 5 : 6}, minmax(0, 1fr))`,
                     }}
@@ -673,7 +673,7 @@ export default function App() {
                       if (gameStatus === 'mem') {
                         if (cell.isTarget) {
                           // Target is extremely vibrant, glowing yellow/cyan during memory stage
-                          cellStyleState = "bg-yellow-400 text-black border-white font-black scale-105 shadow-2xl ring-4 ring-yellow-400";
+                          cellStyleState = "bg-yellow-400 text-black border-white font-black scale-105 shadow-2xl ring-2 sm:ring-4 ring-yellow-400";
                         } else {
                           // Unselected blocks stay extremely low-profile to emphasize target
                           cellStyleState = "bg-zinc-950 text-zinc-900 border-zinc-900 opacity-10";
@@ -681,15 +681,15 @@ export default function App() {
                       } else if (gameStatus === 'play') {
                         if (cell.status === 'correct') {
                           // Correct clicked cells become bold high-contrast Lime Green
-                          cellStyleState = "bg-green-500 text-black border-black font-black scale-95 duration-200 border-8";
+                          cellStyleState = "bg-green-500 text-black border-black font-black scale-95 duration-200 border-4 sm:border-8";
                           renderSymbol = "✔";
                         } else if (cell.status === 'wrong') {
                           // Wrong clicked cells become chunky bold Red
-                          cellStyleState = "bg-red-650 text-white border-white font-black scale-95 duration-200 border-8 border-double ring-4 ring-yellow-400";
+                          cellStyleState = "bg-red-650 text-white border-white font-black scale-95 duration-200 border-4 sm:border-8 border-double ring-2 sm:ring-4 ring-yellow-400";
                           renderSymbol = "✖";
                         } else {
                           // Normal selectable grids have high contrast borders and large legible identifiers
-                          cellStyleState = "bg-zinc-900 hover:bg-zinc-800 text-white border-8 border-zinc-800";
+                          cellStyleState = "bg-zinc-900 hover:bg-zinc-800 text-white border-4 sm:border-8 border-zinc-800";
                         }
                       }
 
@@ -703,7 +703,7 @@ export default function App() {
                           style={{
                             // Border color is customized with our alternating colors preventing similar nearest
                             borderColor: cell.status === 'none' ? cell.color : undefined,
-                            borderWidth: cell.status === 'none' ? '8px' : undefined
+                            borderWidth: cell.status === 'none' ? (level <= 4 ? '5px' : '3px') : undefined
                           }}
                         >
                           <svg viewBox="0 0 100 100" className="w-[70%] h-[70%] flex items-center justify-center pointer-events-none">
@@ -732,55 +732,49 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Instant Actions Track */}
-                <HistoryPanel 
-                  currentRoundClicks={currentRoundClicks}
-                  pastHistory={pastHistory}
-                  lang={lang}
-                />
               </div>
             )}
 
             {/* Level Clear Win Screen (Geometric Balance) */}
             {gameStatus === 'win' && (
-              <div className="w-full max-w-xl mx-auto p-4 py-8">
-                <div className="bg-zinc-900 border-l-8 border-green-500 p-8 rounded-none text-center shadow-[6px_6px_0_#FFF] flex flex-col items-center">
-                  <div className="w-20 h-20 bg-green-500 text-black border-4 border-white flex items-center justify-center text-4xl font-black mb-4 rounded-none shadow-[3px_3px_0_#000]">
+              <div className="w-full max-w-md mx-auto px-4 py-2">
+                <div className="bg-zinc-900 border-l-8 border-green-500 p-5 sm:p-6 rounded-none text-center shadow-[4px_4px_0_#FFF] flex flex-col items-center">
+                  <div className="w-14 h-14 bg-green-500 text-black border-4 border-white flex items-center justify-center text-3xl font-black mb-2 rounded-none shadow-[2px_2px_0_#000]">
                     ✔
                   </div>
-                  <h1 className="text-4xl sm:text-5xl font-black text-green-450 mb-1 uppercase tracking-tighter">
+                  <h1 className="text-2xl sm:text-3xl font-black text-green-450 mb-0.5 uppercase tracking-tighter">
                     {isChinese ? "大成功！關卡完成" : "LEVEL PASSED!"}
                   </h1>
-                  <p className="text-2xl font-bold text-yellow-400 mb-6 uppercase tracking-widest">
+                  <p className="text-lg sm:text-xl font-bold text-yellow-400 mb-4 uppercase tracking-widest">
                     {isChinese ? `成功通過 第 ${level} 關` : `PASSED STAGE ${level}`}
                   </p>
 
-                  <div className="w-full bg-black border-4 border-white p-5 rounded-none text-left mb-6 font-bold uppercase tracking-wider space-y-3 text-base">
-                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1.5 text-zinc-450">
+                  <div className="w-full bg-black border-4 border-white p-3 sm:p-4 rounded-none text-left mb-4 font-bold uppercase tracking-wider space-y-2 text-sm sm:text-base">
+                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1 text-zinc-450">
                       <span>{isChinese ? "目標氣泡總數" : "Total Targets"}:</span>
-                      <span className="text-white font-black text-xl">{targetCount}</span>
+                      <span className="text-white font-black text-base sm:text-lg">{targetCount}</span>
                     </p>
-                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1.5 text-zinc-450">
+                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1 text-zinc-450">
                       <span>{isChinese ? "剩餘生命次數" : "Lives Remaining"}:</span>
-                      <span className="text-red-500 font-black text-xl">❤️ {lives} / {maxLives}</span>
+                      <span className="text-red-500 font-black text-base sm:text-lg">❤️ {lives} / {maxLives}</span>
                     </p>
                     <p className="flex justify-between text-yellow-400">
                       <span>{isChinese ? "當前累積得分" : "Total Score"}:</span>
-                      <span className="font-black text-2xl">{score}</span>
+                      <span className="font-black text-lg sm:text-xl">{score}</span>
                     </p>
                   </div>
 
-                  <div className="w-full flex flex-col gap-4">
+                  <div className="w-full flex flex-col gap-3">
                     <button
                       onClick={handleNextLevel}
-                      className="w-full py-5 bg-green-500 hover:bg-green-600 text-black font-black text-3xl rounded-none border-4 border-black shadow-[4px_4px_0_#FFF] flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight"
+                      className="w-full py-3.5 bg-green-500 hover:bg-green-600 text-black font-black text-xl sm:text-2xl rounded-none border-4 border-black shadow-[3px_3px_0_#FFF] flex items-center justify-center gap-1.5 active:scale-95 transition-all uppercase tracking-tight"
                     >
                       <span>{isChinese ? "進入下一關" : "NEXT LEVEL"}</span>
-                      <ChevronRight size={32} strokeWidth={3} />
+                      <ChevronRight size={24} strokeWidth={3} />
                     </button>
                     <button
                       onClick={handleExitGame}
-                      className="w-full py-3 bg-zinc-900 hover:bg-zinc-850 border-4 border-white text-white font-black text-xl rounded-none active:scale-95 transition-all uppercase tracking-wider shadow-[4px_4px_0_#000]"
+                      className="w-full py-2 bg-zinc-900 hover:bg-zinc-850 border-2 border-white text-white font-black text-xs uppercase tracking-wider"
                     >
                       {isChinese ? "返回主選單" : "MAIN LOBBY"}
                     </button>
@@ -791,44 +785,44 @@ export default function App() {
 
             {/* Level Fail Screen (Geometric Balance) */}
             {gameStatus === 'fail' && (
-              <div className="w-full max-w-xl mx-auto p-4 py-8">
-                <div className="bg-zinc-900 border-l-8 border-red-500 p-8 rounded-none text-center shadow-[6px_6px_0_#FFF] flex flex-col items-center">
-                  <div className="w-20 h-20 bg-red-600 text-white border-4 border-white flex items-center justify-center text-4xl font-black mb-4 rounded-none shadow-[3px_3px_0_#000]">
+              <div className="w-full max-w-md mx-auto px-4 py-2">
+                <div className="bg-zinc-900 border-l-8 border-red-500 p-5 sm:p-6 rounded-none text-center shadow-[4px_4px_0_#FFF] flex flex-col items-center">
+                  <div className="w-14 h-14 bg-red-600 text-white border-4 border-white flex items-center justify-center text-3xl font-black mb-2 rounded-none shadow-[2px_2px_0_#000]">
                     ✕
                   </div>
-                  <h1 className="text-4xl sm:text-5xl font-black text-red-500 mb-1 uppercase tracking-tighter">
+                  <h1 className="text-2xl sm:text-3xl font-black text-red-500 mb-0.5 uppercase tracking-tighter">
                     {isChinese ? "挑戰結束" : "GAME OVER"}
                   </h1>
-                  <p className="text-xl font-bold text-zinc-300 mb-6 uppercase tracking-wider">
+                  <p className="text-sm sm:text-base font-bold text-zinc-300 mb-4 uppercase tracking-wider">
                     {isChinese ? `生命已用盡。別氣餒，再試一次吧！` : `No lives left at Level ${level}.`}
                   </p>
 
-                  <div className="w-full bg-black border-4 border-white p-5 rounded-none text-left mb-6 font-bold uppercase tracking-wider space-y-3 text-base">
-                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1.5 text-zinc-450">
+                  <div className="w-full bg-black border-4 border-white p-3 sm:p-4 rounded-none text-left mb-4 font-bold uppercase tracking-wider space-y-2 text-sm sm:text-base">
+                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1 text-zinc-450">
                       <span>{isChinese ? "挑戰關卡" : "Reached Level"}:</span>
-                      <span className="text-white font-black text-xl">{level}</span>
+                      <span className="text-white font-black text-base sm:text-lg">{level}</span>
                     </p>
-                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1.5 text-zinc-450">
+                    <p className="flex justify-between border-b-2 border-zinc-900 pb-1 text-zinc-450">
                       <span>{isChinese ? "已找目標" : "Targets Cleared"}:</span>
-                      <span className="text-green-400 font-extrabold text-xl">{foundCount} / {targetCount}</span>
+                      <span className="text-green-400 font-extrabold text-base sm:text-lg">{foundCount} / {targetCount}</span>
                     </p>
                     <p className="flex justify-between text-yellow-400">
                       <span>{isChinese ? "當前累積得分" : "Total Score"}:</span>
-                      <span className="font-black text-2xl">{score}</span>
+                      <span className="font-black text-lg sm:text-xl">{score}</span>
                     </p>
                   </div>
 
-                  <div className="w-full flex flex-col gap-4">
+                  <div className="w-full flex flex-col gap-3">
                     <button
                       onClick={handleRetry}
-                      className="w-full py-5 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-3xl rounded-none border-4 border-black shadow-[4px_4px_0_#FFF] flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight"
+                      className="w-full py-3.5 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl sm:text-2xl rounded-none border-4 border-black shadow-[3px_3px_0_#FFF] flex items-center justify-center gap-1.5 active:scale-95 transition-all uppercase tracking-tight"
                     >
-                      <RotateCcw size={28} strokeWidth={3} />
+                      <RotateCcw size={20} strokeWidth={3} />
                       <span>{isChinese ? "再挑戰本關" : "RETRY LEVEL"}</span>
                     </button>
                     <button
                       onClick={handleExitGame}
-                      className="w-full py-3 bg-zinc-900 hover:bg-zinc-850 border-4 border-white text-white font-black text-xl rounded-none active:scale-95 transition-all uppercase tracking-wider shadow-[4px_4px_0_#000]"
+                      className="w-full py-2 bg-zinc-900 hover:bg-zinc-850 border-2 border-white text-white font-black text-xs uppercase tracking-wider"
                     >
                       {isChinese ? "返回主選單" : "MAIN LOBBY"}
                     </button>
