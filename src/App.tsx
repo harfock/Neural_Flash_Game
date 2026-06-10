@@ -15,7 +15,8 @@ import {
   Flame,
   HelpCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  HelpCircle as HelpIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Profile, GameStatus, Cell, ClickRecord, GameHistory } from './types';
@@ -24,6 +25,8 @@ import { Header } from './components/Header';
 import { HistoryPanel } from './components/HistoryPanel';
 import { assignAlternatingColors, EMOJIS, getLetterLabel } from './utils';
 import { updateProfileLevel, saveGameHistory, fetchProfileHistory } from './firebaseUtils';
+import { InteractiveDemo } from './components/InteractiveDemo';
+import { ModeThumbnails } from './components/ModeThumbnails';
 
 export default function App() {
   // Locale State
@@ -31,6 +34,9 @@ export default function App() {
   const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
   const [isGoogleSynced, setIsGoogleSynced] = useState<boolean>(false);
   const [pastHistory, setPastHistory] = useState<GameHistory[]>([]);
+
+  // Interactive Demo Modal State
+  const [showDemoModal, setShowDemoModal] = useState<boolean>(false);
 
   // Symbol Category Mode: 'numbers' | 'letters' | 'emojis'
   const [labelMode, setLabelMode] = useState<'numbers' | 'letters' | 'emojis'>('numbers');
@@ -445,10 +451,54 @@ export default function App() {
               </p>
             </div>
 
-            <ProfileSelector 
-              onProfileSelect={handleProfileSelect} 
-              activeProfile={activeProfile}
-            />
+            {/* Interactive Demo Trigger & Mode Thumbnails */}
+            <div className="mb-8 p-6 bg-zinc-900 border-4 border-yellow-400 rounded-none text-center shadow-[4px_4px_0_#FFF]">
+              <h3 className="text-xl font-black mb-3 text-yellow-400 uppercase tracking-tight flex items-center justify-center gap-1.5">
+                <HelpIcon size={20} />
+                <span>{isChinese ? "新手不知道怎麼玩？" : "NEW TO THE GAME?"}</span>
+              </h3>
+              <p className="text-sm font-semibold text-zinc-300 mb-5">
+                {isChinese 
+                  ? "我們為您準備了 30 秒的互動學習示範，讓您親自體驗並掌握基礎遊戲方法！" 
+                  : "We have prepared a 30-second simulation rehearsal to get you up to speed!"}
+              </p>
+              <button
+                onClick={() => {
+                  playPulseSound(523.25, 'sine', 0.2);
+                  setShowDemoModal(true);
+                }}
+                className="w-full sm:w-auto px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl border-4 border-black rounded-none active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto shadow-[4px_4px_0_#FFF] uppercase"
+              >
+                <HelpIcon size={24} strokeWidth={3} />
+                <span>{isChinese ? "💡 開啟互動教學示範" : "💡 PLAY INTERACTIVE DEMO"}</span>
+              </button>
+            </div>
+
+            {/* 3 Game Mode Thumbnails Grid */}
+            <div className="mb-8">
+              <span className="block text-lg font-black text-white mb-3 uppercase tracking-wider text-center">
+                📊 {isChinese ? "三大趣味認知訓練模式" : "3 ACTIVE COGNITIVE MODES"}
+              </span>
+              <ModeThumbnails 
+                currentMode={labelMode} 
+                onSelectMode={(mode) => {
+                  playPulseSound(440, 'sine', 0.1);
+                  setLabelMode(mode);
+                }}
+                isInteractable={true}
+                lang={lang}
+              />
+            </div>
+
+            <div className="mb-6 border-t-4 border-zinc-850 pt-6">
+              <span className="block text-lg font-black text-yellow-400 mb-2 uppercase tracking-wider text-center">
+                👤 {isChinese ? "選擇或建立長者存檔" : "CHOOSE OR CREATE PROFILE"}
+              </span>
+              <ProfileSelector 
+                onProfileSelect={handleProfileSelect} 
+                activeProfile={activeProfile}
+              />
+            </div>
 
             {/* Accessible Tutorial (Geometric Balance Style) */}
             <div className="max-w-xl mx-auto mt-10 bg-zinc-900 border-l-8 border-yellow-400 p-8 rounded-none text-left shadow-[5px_5px_0_#FFF]">
@@ -506,39 +556,19 @@ export default function App() {
 
                   {/* Grid Symbol Selection Mode for senior customization */}
                   <div className="w-full bg-black border-4 border-white p-5 rounded-none text-left mb-8">
-                    <span className="block text-base font-black text-yellow-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                    <span className="block text-base font-black text-yellow-400 mb-4 flex items-center gap-1.5 uppercase tracking-wider border-b-2 border-zinc-800 pb-2">
                       <Layers size={18} />
-                      <span>{isChinese ? "選擇氣泡符號類別 / SYMBOL STYLE" : "SELECT SYMBOL STYLE:"}</span>
+                      <span>{isChinese ? "選擇趣味訓練模式 / CHOOSE TRAINING MODE" : "SELECT TRAINING MODE:"}</span>
                     </span>
-                    <div className="grid grid-cols-3 gap-3 text-sm font-black text-white">
-                      <button
-                        onClick={() => setLabelMode('numbers')}
-                        className={`p-3 rounded-none border-4 active:scale-95 transition-all flex flex-col items-center uppercase ${
-                          labelMode === 'numbers' ? 'bg-yellow-400 text-black border-white shadow-[3px_3px_0_#000]' : 'bg-zinc-900 border-zinc-800 hover:bg-zinc-850 text-zinc-400'
-                        }`}
-                      >
-                        <span className="text-2xl mb-1">🔢</span>
-                        <span>{isChinese ? "數字 (1..)" : "NUMBERS"}</span>
-                      </button>
-                      <button
-                        onClick={() => setLabelMode('letters')}
-                        className={`p-3 rounded-none border-4 active:scale-95 transition-all flex flex-col items-center uppercase ${
-                          labelMode === 'letters' ? 'bg-yellow-400 text-black border-white shadow-[3px_3px_0_#000]' : 'bg-zinc-900 border-zinc-800 hover:bg-zinc-850 text-zinc-400'
-                        }`}
-                      >
-                        <span className="text-2xl mb-1">🔤</span>
-                        <span>{isChinese ? "字母 (A..)" : "LETTERS"}</span>
-                      </button>
-                      <button
-                        onClick={() => setLabelMode('emojis')}
-                        className={`p-3 rounded-none border-4 active:scale-95 transition-all flex flex-col items-center uppercase ${
-                          labelMode === 'emojis' ? 'bg-yellow-400 text-black border-white shadow-[3px_3px_0_#000]' : 'bg-zinc-900 border-zinc-800 hover:bg-zinc-850 text-zinc-400'
-                        }`}
-                      >
-                        <span className="text-2xl mb-1">🍇</span>
-                        <span>{isChinese ? "圖示 EMO" : "EMOJIS"}</span>
-                      </button>
-                    </div>
+                    <ModeThumbnails 
+                      currentMode={labelMode} 
+                      onSelectMode={(mode) => {
+                        playPulseSound(440, 'sine', 0.1);
+                        setLabelMode(mode);
+                      }}
+                      isInteractable={true}
+                      lang={lang}
+                    />
                   </div>
 
                   {/* Big clear chunky actions */}
@@ -549,6 +579,17 @@ export default function App() {
                     >
                       <Play size={32} fill="currentColor" strokeWidth={0} />
                       <span>{isChinese ? "開始記憶挑戰！" : "START CHALLENGE!"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playPulseSound(523.25, 'sine', 0.2);
+                        setShowDemoModal(true);
+                      }}
+                      className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl rounded-none border-4 border-black flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight shadow-[4px_4px_0_#FFF]"
+                    >
+                      <HelpIcon size={24} strokeWidth={3} />
+                      <span>{isChinese ? "💡 新手互動教學示範" : "💡 INTERACTIVE PLAY DEMO"}</span>
                     </button>
 
                     {level > 1 && (
@@ -658,14 +699,33 @@ export default function App() {
                           onClick={() => handleCellClick(cell.id)}
                           whileHover={cell.status === 'none' ? { scale: 1.05 } : {}}
                           whileTap={cell.status === 'none' ? { scale: 0.92 } : {}}
-                          className={`rounded-2xl aspect-square text-3xl sm:text-4xl font-black flex items-center justify-center cursor-pointer transition-all ${cellStyleState}`}
+                          className={`rounded-2xl aspect-square font-black flex items-center justify-center cursor-pointer transition-all ${cellStyleState}`}
                           style={{
                             // Border color is customized with our alternating colors preventing similar nearest
                             borderColor: cell.status === 'none' ? cell.color : undefined,
                             borderWidth: cell.status === 'none' ? '8px' : undefined
                           }}
                         >
-                          {renderSymbol}
+                          <svg viewBox="0 0 100 100" className="w-[70%] h-[70%] flex items-center justify-center pointer-events-none">
+                            <text 
+                              x="50" 
+                              y="50" 
+                              dominantBaseline="central" 
+                              textAnchor="middle" 
+                              className="font-black select-none"
+                              fill="currentColor"
+                              fontSize={
+                                labelMode === 'emojis' || renderSymbol === '✔' || renderSymbol === '✖'
+                                  ? "65" 
+                                  : renderSymbol.length > 1 
+                                    ? "55" 
+                                    : "75"
+                              }
+                              style={{ fontFamily: 'inherit' }}
+                            >
+                              {renderSymbol}
+                            </text>
+                          </svg>
                         </motion.button>
                       );
                     })}
@@ -788,6 +848,13 @@ export default function App() {
         <span className="text-zinc-600">© 2026 SNAPSHOT BLITZ HIGH CONTRAST</span>
         <span>SECURITY: PROTOCOL ACTIVE</span>
       </div>
+
+      <InteractiveDemo 
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+        lang={lang}
+        playPulseSound={playPulseSound}
+      />
 
     </div>
   );
