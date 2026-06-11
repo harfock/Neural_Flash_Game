@@ -379,6 +379,39 @@ export default function App() {
     };
   }, [gameStatus, isElderly]);
 
+  // Auto-initialize standard profile for zero-friction launch experience!
+  useEffect(() => {
+    try {
+      const guestsJson = localStorage.getItem('blitz_guests_v2');
+      if (guestsJson) {
+        const parsed = JSON.parse(guestsJson) as Profile[];
+        if (parsed.length > 0) {
+          // Select the first available profile
+          setActiveProfile(parsed[0]);
+          setLevel(parsed[0].maxLvl);
+          setScore((parsed[0].maxLvl - 1) * 100);
+          loadProfileHistory(parsed[0].id, false);
+          return;
+        }
+      }
+      // If there are no profiles, auto-generate a generic player instance!
+      const defaultProfile: Profile = {
+        id: 'guest_' + Date.now(),
+        name: lang === 'big5' ? '精明大腦' : 'Bright Brain',
+        maxLvl: 1,
+        ownerId: 'guest',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('blitz_guests_v2', JSON.stringify([defaultProfile]));
+      setActiveProfile(defaultProfile);
+      setLevel(1);
+      setScore(0);
+    } catch (e) {
+      console.error("Local storage initialization failed:", e);
+    }
+  }, []);
+
   // Restart settings
   const handleNextLevel = () => {
     startRound(level + 1);
@@ -394,6 +427,7 @@ export default function App() {
 
   const handleExitGame = () => {
     clearInterval(timerRef.current);
+    setActiveProfile(null);
     setGameStatus('idle');
   };
 
@@ -401,30 +435,30 @@ export default function App() {
     <div className="min-h-screen bg-black text-white font-sans flex flex-col justify-between" id="applet-root">
       
       {/* Top Banner Control Switch */}
-      <div className="bg-zinc-900 border-b-4 border-zinc-800 px-6 py-4 flex justify-between items-center text-sm font-black uppercase tracking-wider">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-yellow-400 fill-yellow-400" />
-          <span className="text-white text-lg font-black tracking-tighter">SNAPSHOT BLITZ</span>
-          <span className="text-black bg-yellow-400 px-2 py-0.5 border border-black rounded-none mx-2 text-xs font-black">
+      <div className="bg-zinc-900 border-b-2 border-zinc-800 px-4 py-2 flex justify-between items-center text-xs font-black uppercase tracking-wider">
+        <div className="flex items-center gap-1.5">
+          <Sparkles size={14} className="text-yellow-400 fill-yellow-400" />
+          <span className="text-white text-base font-black tracking-tighter">SNAPSHOT BLITZ</span>
+          <span className="text-black bg-yellow-400 px-1.5 py-0.5 border border-black rounded-none mx-1 text-[10px] font-black">
             PRO ACCESSIBLE
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Sound Toggle */}
           <button
             onClick={() => setIsSoundOn(!isSoundOn)}
-            className="p-2 bg-black hover:bg-zinc-850 text-white border-4 border-yellow-400 rounded-none flex items-center gap-1.5 text-xs font-black tracking-wide shadow-[2px_2px_0_#FFF]"
+            className="p-1 px-1.5 bg-black hover:bg-zinc-850 text-white border-2 border-yellow-400 rounded-none flex items-center gap-1 text-[10px] font-black tracking-wide"
             title="Toggle Sound"
           >
-            {isSoundOn ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            {isSoundOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
             <span>{isSoundOn ? (isChinese ? "聲音開" : "SOUND ON") : (isChinese ? "聲音關" : "SOUND OFF")}</span>
           </button>
 
           {/* Lang Toggle */}
           <button
             onClick={() => setLang(lang === 'big5' ? 'en' : 'big5')}
-            className="p-2 bg-yellow-400 hover:bg-yellow-500 text-black border-4 border-black rounded-none text-xs font-black tracking-wide shadow-[2px_2px_0_#FFF]"
+            className="p-1 px-1.5 bg-yellow-400 hover:bg-yellow-500 text-black border-2 border-black rounded-none text-[10px] font-black tracking-wide"
           >
             🌐 {isChinese ? "English" : "繁體中文"}
           </button>
@@ -438,40 +472,14 @@ export default function App() {
           /* Profile Selector / Setup Lobby Screen (Geometric Balance Style) */
           <div className="w-full max-w-2xl mx-auto px-4 py-8">
             <div className="text-center mb-10 flex flex-col items-center">
-              <div className="w-24 h-24 bg-yellow-400 text-black border-4 border-white flex items-center justify-center text-5xl font-black mb-4 rounded-none shadow-[4px_4px_0_#000]">
-                ⏳
-              </div>
               <h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter mb-1">
                 {isChinese ? "快照閃電戰：精準記憶" : "SNAPSHOT BLITZ"}
               </h1>
               <p className="text-lg sm:text-xl text-yellow-400 font-bold uppercase tracking-widest max-w-lg">
                 {isChinese 
-                  ? "專為長者設計的超高對比高彩、三段生命容錯挑戰遊戲" 
-                  : "TRAINING SESSION 04 • HIGH CONTRAST MEMORY CHALLENGE"}
+                  ? "天天活化腦細胞！專為長者設計的趣味記憶訓練，越玩越靈光、有效提升專注與腦力！" 
+                  : "BOOST YOUR BRAIN POWER DAILY! FUN COGNITIVE MEMORY WORKOUT TO KEEP YOUR MIND SHARP & FOCUSED!"}
               </p>
-            </div>
-
-            {/* Interactive Demo Trigger & Mode Thumbnails */}
-            <div className="mb-8 p-6 bg-zinc-900 border-4 border-yellow-400 rounded-none text-center shadow-[4px_4px_0_#FFF]">
-              <h3 className="text-xl font-black mb-3 text-yellow-400 uppercase tracking-tight flex items-center justify-center gap-1.5">
-                <HelpIcon size={20} />
-                <span>{isChinese ? "新手不知道怎麼玩？" : "NEW TO THE GAME?"}</span>
-              </h3>
-              <p className="text-sm font-semibold text-zinc-300 mb-5">
-                {isChinese 
-                  ? "我們為您準備了 30 秒的互動學習示範，讓您親自體驗並掌握基礎遊戲方法！" 
-                  : "We have prepared a 30-second simulation rehearsal to get you up to speed!"}
-              </p>
-              <button
-                onClick={() => {
-                  playPulseSound(523.25, 'sine', 0.2);
-                  setShowDemoModal(true);
-                }}
-                className="w-full sm:w-auto px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl border-4 border-black rounded-none active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto shadow-[4px_4px_0_#FFF] uppercase"
-              >
-                <HelpIcon size={24} strokeWidth={3} />
-                <span>{isChinese ? "💡 開啟互動教學示範" : "💡 PLAY INTERACTIVE DEMO"}</span>
-              </button>
             </div>
 
             {/* 3 Game Mode Thumbnails Grid */}
@@ -490,7 +498,7 @@ export default function App() {
               />
             </div>
 
-            <div className="mb-6 border-t-4 border-zinc-850 pt-6">
+            <div className="mb-8 border-t-4 border-zinc-850 pt-6">
               <span className="block text-lg font-black text-yellow-400 mb-2 uppercase tracking-wider text-center">
                 👤 {isChinese ? "選擇或建立長者存檔" : "CHOOSE OR CREATE PROFILE"}
               </span>
@@ -498,6 +506,29 @@ export default function App() {
                 onProfileSelect={handleProfileSelect} 
                 activeProfile={activeProfile}
               />
+            </div>
+
+            {/* Interactive Demo Trigger & Mode Thumbnails */}
+            <div className="mb-8 p-6 bg-zinc-900 border-4 border-yellow-400 rounded-none text-center shadow-[4px_4px_0_#FFF]">
+              <h3 className="text-xl font-black mb-3 text-yellow-400 uppercase tracking-tight flex items-center justify-center gap-1.5">
+                <HelpIcon size={20} />
+                <span>{isChinese ? "新手不知道怎麼玩？" : "NEW TO THE GAME?"}</span>
+              </h3>
+              <p className="text-sm font-semibold text-zinc-300 mb-5">
+                {isChinese 
+                  ? "我們為您準備了 30秒的互動學習示範，讓您親自體驗並掌握基礎遊戲方法！" 
+                  : "We have prepared a 30-second simulation rehearsal to get you up to speed!"}
+              </p>
+              <button
+                onClick={() => {
+                  playPulseSound(523.25, 'sine', 0.2);
+                  setShowDemoModal(true);
+                }}
+                className="w-full sm:w-auto px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl border-4 border-black rounded-none active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto shadow-[4px_4px_0_#FFF] uppercase"
+              >
+                <HelpIcon size={24} strokeWidth={3} />
+                <span>{isChinese ? "💡 開啟互動教學示範" : "💡 PLAY INTERACTIVE DEMO"}</span>
+              </button>
             </div>
 
             {/* Accessible Tutorial (Geometric Balance Style) */}
@@ -517,7 +548,7 @@ export default function App() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-yellow-400 font-extrabold text-lg">03 //</span>
-                  <span>{isChinese ? "容錯設計：一局包含 3 次嘗試機會！失誤點錯將扣減生命次數。" : "ERROR SYSTEM: Enjoy 3 lives protection. Misclicks cost attempts."}</span>
+                  <span>{isChinese ? "容錯設計：一局包含 3 次嘗試機會！失誤點錯將扣減嘗試次數。" : "ERROR SYSTEM: Enjoy 3 attempts protection. Misclicks cost attempts."}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-yellow-400 font-extrabold text-lg">04 //</span>
@@ -545,19 +576,28 @@ export default function App() {
 
             {/* Standard Dashboard view when in IDLE lobby state */}
             {gameStatus === 'idle' && (
-              <div className="w-full max-w-xl mx-auto p-4 py-8 flex flex-col gap-6 text-center">
-                <div className="bg-zinc-900 border-l-8 border-yellow-400 p-8 text-white rounded-none shadow-[6px_6px_0_#FFF] flex flex-col items-center">
-                  <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-tighter">
+              <div className="w-full max-w-xl mx-auto p-2 py-3 flex flex-col gap-3 text-center">
+                <div className="bg-zinc-900 border-l-4 border-yellow-400 p-4 text-white rounded-none shadow-[4px_4px_0_#FFF] flex flex-col items-center">
+                  <h2 className="text-xl sm:text-2xl font-black text-white mb-0.5 uppercase tracking-tighter">
                     {isChinese ? `你好，${activeProfile.name}！` : `HELLO, ${activeProfile.name}!`}
                   </h2>
-                  <p className="text-xl font-bold text-yellow-400 mb-8 uppercase tracking-widest border-b-2 border-zinc-800 pb-3 w-full">
+                  <p className="text-sm font-bold text-yellow-400 mb-4 uppercase tracking-widest border-b border-zinc-800 pb-1 w-full">
                     {isChinese ? `當前解鎖關卡：第 ${activeProfile.maxLvl} 關` : `UNLOCKED LEVEL: Level ${activeProfile.maxLvl}`}
                   </p>
 
+                  {/* Big high-contrast Game Start button above mode demos */}
+                  <button
+                    onClick={() => startRound(level)}
+                    className="w-full py-3 mb-4 bg-green-500 hover:bg-green-600 text-black font-black text-xl sm:text-2xl rounded-none border-2 border-black shadow-[3px_3px_0_#FFF] flex items-center justify-center gap-1.5 active:scale-95 transition-all uppercase tracking-tight"
+                  >
+                    <Play size={24} fill="currentColor" strokeWidth={0} />
+                    <span>{isChinese ? "開始記憶挑戰！" : "START CHALLENGE!"}</span>
+                  </button>
+
                   {/* Grid Symbol Selection Mode for senior customization */}
-                  <div className="w-full bg-black border-4 border-white p-5 rounded-none text-left mb-8">
-                    <span className="block text-base font-black text-yellow-400 mb-4 flex items-center gap-1.5 uppercase tracking-wider border-b-2 border-zinc-800 pb-2">
-                      <Layers size={18} />
+                  <div className="w-full bg-black border-2 border-zinc-750 p-2.5 rounded-none text-left mb-4">
+                    <span className="block text-xs font-black text-yellow-400 mb-2 flex items-center gap-1 uppercase tracking-wider border-b border-zinc-850 pb-1.5">
+                      <Layers size={14} />
                       <span>{isChinese ? "選擇趣味訓練模式 / CHOOSE TRAINING MODE" : "SELECT TRAINING MODE:"}</span>
                     </span>
                     <ModeThumbnails 
@@ -571,44 +611,36 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Big clear chunky actions */}
-                  <div className="w-full flex flex-col gap-4">
-                    <button
-                      onClick={() => startRound(level)}
-                      className="w-full py-5 bg-green-500 hover:bg-green-600 text-black font-black text-3xl rounded-none border-4 border-black shadow-[4px_4px_0_#FFF] flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight"
-                    >
-                      <Play size={32} fill="currentColor" strokeWidth={0} />
-                      <span>{isChinese ? "開始記憶挑戰！" : "START CHALLENGE!"}</span>
-                    </button>
-
+                  {/* Big clear chunky actions in highly compact layout */}
+                  <div className="w-full text-xs flex flex-row gap-2">
                     <button
                       onClick={() => {
                         playPulseSound(523.25, 'sine', 0.2);
                         setShowDemoModal(true);
                       }}
-                      className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xl rounded-none border-4 border-black flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight shadow-[4px_4px_0_#FFF]"
+                      className="flex-1 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black font-black text-xs rounded-none border-2 border-black flex items-center justify-center gap-1 active:scale-95 transition-all uppercase tracking-tight shadow-[2px_2px_0_#FFF]"
                     >
-                      <HelpIcon size={24} strokeWidth={3} />
-                      <span>{isChinese ? "💡 新手互動教學示範" : "💡 INTERACTIVE PLAY DEMO"}</span>
+                      <HelpIcon size={14} strokeWidth={2.5} />
+                      <span>{isChinese ? "💡 新手教學" : "💡 PLAY DEMO"}</span>
                     </button>
-
-                    {level > 1 && (
-                      <button
-                        onClick={handleStartOver}
-                        className="w-full py-4 bg-zinc-900 hover:bg-zinc-850 text-white font-black text-xl rounded-none border-4 border-white flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-tight shadow-[4px_4px_0_#000]"
-                      >
-                        <RotateCcw size={20} />
-                        <span>{isChinese ? "從第 1 關重新開始 / RESET" : "RESET TO LVL 1"}</span>
-                      </button>
-                    )}
 
                     <button
                       onClick={handleExitGame}
-                      className="w-full py-3 bg-red-600 hover:bg-red-705 text-white font-black text-lg border-4 border-white rounded-none active:scale-95 transition-all uppercase tracking-wider"
+                      className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-850 text-white font-black text-xs border-2 border-white rounded-none active:scale-95 transition-all uppercase tracking-tight shadow-[2px_2px_0_#000]"
                     >
-                      {isChinese ? "返回檔案選擇 / SWITCH PROFILE" : "SWITCH PROFILE"}
+                      <span>👤 {isChinese ? "切換/建立存檔" : "SWITCH PROFILE"}</span>
                     </button>
                   </div>
+
+                  {level > 1 && (
+                    <button
+                      onClick={handleStartOver}
+                      className="w-full py-1 mt-2.5 bg-zinc-950 hover:bg-zinc-850 text-zinc-400 font-bold text-[10px] rounded-none border border-zinc-800 active:scale-95 transition-all uppercase tracking-tight"
+                    >
+                      <RotateCcw size={10} className="inline mr-1" />
+                      <span>{isChinese ? "重置回第 1 關 / RESET" : "RESET TO LVL 1"}</span>
+                    </button>
+                  )}
                 </div>
 
                 <HistoryPanel 
@@ -624,36 +656,45 @@ export default function App() {
               <div className="w-full max-w-5xl mx-auto px-4 py-2 flex flex-col gap-3 sm:gap-4 items-center">
                 
                 {/* Live Status Board with extremely high-contrast yellow outline (Geometric Balance) */}
-                <div className="w-full bg-zinc-900 border-l-8 border-yellow-400 py-2.5 px-4 rounded-none text-center flex flex-col justify-center items-center select-none shadow-[3px_3px_0_#FFF]">
+                <div className="w-full bg-zinc-900 border-l-8 border-yellow-400 py-2 px-4 rounded-none text-center flex flex-col justify-center items-center select-none shadow-[3px_3px_0_#FFF] min-h-[76px] sm:min-h-[84px]">
                   <div className="flex items-center gap-2">
                     <div className="w-3.5 h-3.5 rounded-full bg-red-600 border-2 border-white animate-pulse" />
                     <span className="text-base sm:text-lg md:text-xl font-black text-white uppercase tracking-tight">
                       {gameStatus === 'mem' 
-                        ? (isChinese ? `第一階段：請記住亮黃色目標位置 [還剩: ${memRemaining}秒]` : `MEMORIZE PROTOCOL... [REMAINING: ${memRemaining}S]`)
-                        : (isChinese ? `第二階段：選出剛才亮起的氣泡，還有 [ ${targetCount - foundCount} ] 個！` : `FIND TARGETS: [${targetCount - foundCount} LEFT]`)
+                        ? (isChinese ? `第一階段：請記住亮黃色目標位置` : `MEMORIZE PROTOCOL...`)
+                        : (isChinese ? `第二階段：選出亮起的九宮格` : `FIND TARGETS PROTOCOL...`)
                       }
                     </span>
                   </div>
 
-                  {/* Multi-life status help */}
-                  {gameStatus === 'play' && (
-                    <p className="text-xs sm:text-sm font-black text-yellow-400 mt-1 uppercase tracking-wide">
-                      {isChinese 
-                        ? `生命提示：您可以再點錯 ${lives - 1} 次！` 
-                        : `LIFE PROTECTION: ${lives} OF ${maxLives} ATTEMPTS REMAINING`
-                      }
-                    </p>
-                  )}
+                  {/* Multi-life or countdown status help (always displays 2 rows to prevent layout auto-shifting) */}
+                  <p className="text-xs sm:text-sm font-black text-yellow-400 mt-1 uppercase tracking-wide">
+                    {gameStatus === 'mem' ? (
+                      isChinese 
+                        ? `記憶倒數中：還剩 ${memRemaining} 秒！` 
+                        : `MEMORIZED COUNTDOWN: ${memRemaining}S REMAINING`
+                    ) : (
+                      isChinese 
+                        ? `嘗試提示：您可以再點錯 ${lives - 1} 次！[還有 ${targetCount - foundCount} 個]` 
+                        : `ATTEMPT PROTECTION: ${lives} OF ${maxLives} ATTEMPTS REMAINING | [${targetCount - foundCount} LEFT]`
+                    )}
+                  </p>
                 </div>
 
-                {/* Elderly Helper hint floating box */}
-                {isElderly && gameStatus === 'play' && (
-                  <div className="w-full max-w-md bg-yellow-400 border-2 sm:border-4 border-black py-1.5 px-3 rounded-none text-black font-black text-sm sm:text-lg text-center shadow-[3px_3px_0_#FFF] uppercase tracking-wide">
-                    <span>💡 【長者提示】已找到 </span>
-                    <span className="underline decoration-wavy font-black">{foundCount}</span>
-                    <span> 個 / 剩餘：</span>
-                    <span className="text-red-700 font-black">{targetCount - foundCount}</span>
-                    <span> 個</span>
+                {/* Elderly Helper hint floating box (rendered in both states to preserve layout height and prevent shifting) */}
+                {isElderly && (
+                  <div className="w-full max-w-md bg-yellow-400 border-2 sm:border-4 border-black py-1.5 px-3 rounded-none text-black font-black text-sm sm:text-base text-center shadow-[3px_3px_0_#FFF] uppercase tracking-wide min-h-[38px] sm:min-h-[46px] flex items-center justify-center">
+                    {gameStatus === 'mem' ? (
+                      <span>{isChinese ? "💡 【提示】請記住發光的格子位置" : "💡 【HINT】MEMORIZE THE GLOWING CELLS"}</span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-1">
+                        <span>💡 【提示】已找到 </span>
+                        <span className="underline decoration-wavy font-black">{foundCount}</span>
+                        <span> 個 / 剩餘：</span>
+                        <span className="text-red-705 font-black">{targetCount - foundCount}</span>
+                        <span> 個</span>
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -755,7 +796,7 @@ export default function App() {
                       <span className="text-white font-black text-base sm:text-lg">{targetCount}</span>
                     </p>
                     <p className="flex justify-between border-b-2 border-zinc-900 pb-1 text-zinc-450">
-                      <span>{isChinese ? "剩餘生命次數" : "Lives Remaining"}:</span>
+                      <span>{isChinese ? "剩餘嘗試次數" : "Attempts Remaining"}:</span>
                       <span className="text-red-500 font-black text-base sm:text-lg">❤️ {lives} / {maxLives}</span>
                     </p>
                     <p className="flex justify-between text-yellow-400">
@@ -794,7 +835,7 @@ export default function App() {
                     {isChinese ? "挑戰結束" : "GAME OVER"}
                   </h1>
                   <p className="text-sm sm:text-base font-bold text-zinc-300 mb-4 uppercase tracking-wider">
-                    {isChinese ? `生命已用盡。別氣餒，再試一次吧！` : `No lives left at Level ${level}.`}
+                    {isChinese ? `未能通過本關。別氣餒，再試一次吧！` : `No lives left at Level ${level}.`}
                   </p>
 
                   <div className="w-full bg-black border-4 border-white p-3 sm:p-4 rounded-none text-left mb-4 font-bold uppercase tracking-wider space-y-2 text-sm sm:text-base">

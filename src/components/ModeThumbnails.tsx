@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { Layers, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 interface ModeThumbnailsProps {
   currentMode: 'numbers' | 'letters' | 'emojis';
@@ -25,9 +25,6 @@ export const ModeThumbnails: React.FC<ModeThumbnailsProps> = ({
       titleEn: 'NUMBERS MODE',
       descZh: '經典序列記憶，適合常規大腦邏輯儲備鍛鍊。',
       descEn: 'Classic sequential recall, perfect for general numerical training.',
-      items: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
-      highlightIdx: [2, 4], // Sparkles simulation
-      accentColor: 'border-yellow-400 bg-yellow-400 text-black',
     },
     {
       id: 'letters' as const,
@@ -36,9 +33,6 @@ export const ModeThumbnails: React.FC<ModeThumbnailsProps> = ({
       titleEn: 'LETTERS MODE',
       descZh: '字母拼讀空間排序，強化語言認知交互作用。',
       descEn: 'Alphabetical placement, great for language and spatial grasp.',
-      items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-      highlightIdx: [0, 6],
-      accentColor: 'border-green-400 bg-green-400 text-black',
     },
     {
       id: 'emojis' as const,
@@ -47,96 +41,108 @@ export const ModeThumbnails: React.FC<ModeThumbnailsProps> = ({
       titleEn: 'EMOJIS MODE',
       descZh: '高色彩鮮豔圖形關聯，最親民無壓力記憶挑戰。',
       descEn: 'Vibrant fruit associations, friendly and visually stimulating.',
-      items: ['🍎', '🍒', '🍋', '🍇', '🍉', '🍍', '🥝', '🥑', '🍌'],
-      highlightIdx: [3, 7],
-      accentColor: 'border-cyan-400 bg-cyan-400 text-black',
     }
   ];
 
+  const currentIndex = modes.findIndex((m) => m.id === currentMode);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isInteractable || !onSelectMode) return;
+    const prevIndex = (currentIndex - 1 + modes.length) % modes.length;
+    onSelectMode(modes[prevIndex].id);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isInteractable || !onSelectMode) return;
+    const nextIndex = (currentIndex + 1) % modes.length;
+    onSelectMode(modes[nextIndex].id);
+  };
+
+  const activeMode = modes[currentIndex];
+
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {modes.map((mode) => {
-          const isSelected = currentMode === mode.id;
-          
-          return (
+    <div className="w-full flex flex-col items-center gap-1.5" id="mode-flipper-container">
+      <div className="flex items-center justify-between w-full gap-2 bg-black border-4 border-zinc-800 p-1.5 sm:p-2 rounded-none">
+        
+        {/* Left Arrow */}
+        <button
+          onClick={handlePrev}
+          disabled={!isInteractable}
+          className={`p-2 bg-zinc-900 border-2 border-white text-white rounded-none flex items-center justify-center transition-all ${
+            isInteractable 
+              ? 'hover:bg-yellow-400 hover:text-black cursor-pointer active:scale-95' 
+              : 'opacity-50 cursor-not-allowed'
+          }`}
+          title="Previous Mode"
+        >
+          <ChevronLeft size={24} strokeWidth={3} />
+        </button>
+
+        {/* Centered Active Mode Display with subtle flip motion */}
+        <div className="flex-grow overflow-hidden relative min-h-[70px] flex items-center justify-center px-2">
+          <AnimatePresence mode="wait">
             <motion.div
-              key={mode.id}
-              onClick={() => {
-                if (isInteractable && onSelectMode) {
-                  onSelectMode(mode.id);
-                }
-              }}
-              whileHover={{ scale: isInteractable ? 1.02 : 1 }}
-              whileTap={{ scale: isInteractable ? 0.98 : 1 }}
-              className={`border-4 text-left p-4 rounded-none transition-all flex flex-col justify-between ${
-                isInteractable ? 'cursor-pointer' : ''
-              } ${
-                isSelected 
-                  ? 'bg-zinc-900 border-yellow-400 shadow-[4px_4px_0_#FFF]' 
-                  : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
-              }`}
+              key={activeMode.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.15 }}
+              className="w-full flex items-center gap-3 sm:gap-4 justify-start text-left"
             >
-              {/* Highlight selector if select mode */}
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-3xl">{mode.em}</span>
-                {isInteractable && isSelected && (
-                  <span className="bg-yellow-400 text-black px-2 py-0.5 text-xs font-black uppercase flex items-center gap-1 border border-black">
-                    <CheckCircle2 size={12} strokeWidth={3} />
-                    <span>{isChinese ? '已選定' : 'SELECTED'}</span>
-                  </span>
-                )}
-                {!isInteractable && (
-                  <span className="text-zinc-500 text-xs font-black">
-                    MODE
-                  </span>
-                )}
+              <div className="text-4xl sm:text-5xl shrink-0 select-none bg-zinc-900 border-2 border-zinc-700 p-1.5 flex items-center justify-center">
+                {activeMode.em}
               </div>
-
-              {/* Title descriptions */}
-              <h4 className="text-lg font-black text-white uppercase tracking-tight">
-                {isChinese ? mode.titleZh : mode.titleEn}
-              </h4>
-              <p className="text-xs text-zinc-400 font-medium my-2 line-clamp-2 leading-relaxed">
-                {isChinese ? mode.descZh : mode.descEn}
-              </p>
-
-              {/* Mini CSS Grid Preview inside thumbnail */}
-              <div className="w-full bg-black p-2 border-2 border-zinc-900 mt-2 block">
-                <div className="grid grid-cols-3 gap-1.5 aspect-video w-full justify-center">
-                  {mode.items.map((item, idx) => {
-                    const isMockTarget = mode.highlightIdx.includes(idx);
-                    return (
-                      <div
-                        key={idx}
-                        className={`font-black flex items-center justify-center p-1 rounded transition-all ${
-                          isMockTarget
-                            ? 'bg-yellow-400 text-black border-2 border-white font-extrabold animate-pulse'
-                            : 'bg-zinc-900 text-zinc-600 border border-zinc-800 opacity-60'
-                        }`}
-                      >
-                        <svg viewBox="0 0 100 100" className="w-[70%] h-[70%] flex items-center justify-center pointer-events-none">
-                          <text 
-                            x="50" 
-                            y="50" 
-                            dominantBaseline="central" 
-                            textAnchor="middle" 
-                            className="font-black select-none"
-                            fill="currentColor"
-                            fontSize="75"
-                            style={{ fontFamily: 'inherit' }}
-                          >
-                            {item}
-                          </text>
-                        </svg>
-                      </div>
-                    );
-                  })}
+              <div className="flex-grow">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm sm:text-base font-black text-yellow-450 uppercase tracking-tight">
+                    {isChinese ? activeMode.titleZh : activeMode.titleEn}
+                  </h4>
+                  {isInteractable && (
+                    <span className="bg-green-500 text-black px-1.5 py-0.5 text-[10px] font-black uppercase flex items-center gap-1">
+                      <CheckCircle2 size={10} strokeWidth={3.5} />
+                      <span>{isChinese ? '已啟用' : 'ACTIVE'}</span>
+                    </span>
+                  )}
                 </div>
+                <p className="text-[11px] sm:text-xs text-zinc-350 font-medium leading-tight mt-0.5 line-clamp-1">
+                  {isChinese ? activeMode.descZh : activeMode.descEn}
+                </p>
               </div>
             </motion.div>
-          );
-        })}
+          </AnimatePresence>
+        </div>
+
+        {/* Right Arrow */}
+        <button
+          onClick={handleNext}
+          disabled={!isInteractable}
+          className={`p-2 bg-zinc-900 border-2 border-white text-white rounded-none flex items-center justify-center transition-all ${
+            isInteractable 
+              ? 'hover:bg-yellow-400 hover:text-black cursor-pointer active:scale-95' 
+              : 'opacity-50 cursor-not-allowed'
+          }`}
+          title="Next Mode"
+        >
+          <ChevronRight size={24} strokeWidth={3} />
+        </button>
+
+      </div>
+
+      {/* Dotted Page Indicators */}
+      <div className="flex gap-1.5 items-center justify-center">
+        {modes.map((m, idx) => (
+          <button
+            key={m.id}
+            onClick={() => isInteractable && onSelectMode && onSelectMode(m.id)}
+            className={`w-2.5 h-2.5 transition-all rounded-full ${
+              currentIndex === idx 
+                ? 'bg-yellow-400 scale-110 border border-white' 
+                : 'bg-zinc-700 hover:bg-zinc-650'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );

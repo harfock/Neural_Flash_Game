@@ -46,7 +46,7 @@ export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({
       playPulseSound(220, 'sawtooth', 0.3); // Wrong tone
       setFailedAttempts(prev => prev + 1);
       setDemoMessage(isChinese 
-        ? `點錯囉！沒關係，這會顯示紅色的 ✖ 叉號。生命安全機制能保護您！再試試看點擊中間那個格子！`
+        ? `點錯囉！沒關係，這會顯示紅色的 ✖ 叉號。三次嘗試機制能保護您！再試試看點擊中間那個格子！`
         : `Ouch, that's wrong! No worries, it displays a red ✖ cross. Attempt safety protects you! Try clicking the center cell!`
       );
     }
@@ -311,7 +311,7 @@ export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({
                     </h5>
                     <p className="text-xs text-zinc-300">
                       {isChinese 
-                        ? "每關享有3次嘗試生命！就算長輩因顫抖、恍神點錯了也不要緊，可以安心發揮。" 
+                        ? "每關享有3次嘗試機會！就算長輩因顫抖、恍神點錯了也不要緊，可以安心發揮。" 
                         : "You get 3 tries before a gameover! Shake and misclicks are protected built-in!"}
                     </p>
                   </div>
